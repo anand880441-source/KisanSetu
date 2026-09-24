@@ -1,3 +1,5 @@
+const path = require('path');
+require('dotenv').config({ path: path.resolve(__dirname, '../../.env') });
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
@@ -22,6 +24,24 @@ if (!process.env.JWT_SECRET) {
 if (!process.env.MONGO_URI) {
     console.warn('WARNING: MONGO_URI is not defined, using local fallback.');
 }
+
+// Email credential check — warn at startup so you know immediately if OTPs will only go to console
+const emailUser = process.env.EMAIL_USER;
+const emailIsPlaceholder = !emailUser ||
+    emailUser === 'your_email@gmail.com' ||
+    emailUser === 'no-reply@kisansetu.com';
+if (emailIsPlaceholder) {
+    console.warn('');
+    console.warn('⚠️  [Auth Service] EMAIL is in DEV/MOCK mode — OTPs will be printed to console ONLY.');
+    console.warn('⚠️  Real verification emails will NOT be sent until you configure .env:');
+    console.warn('       EMAIL_USER=your.real.gmail@gmail.com');
+    console.warn('       EMAIL_PASS=xxxx xxxx xxxx xxxx  (Gmail App Password)');
+    console.warn('⚠️  See: https://myaccount.google.com/apppasswords');
+    console.warn('');
+} else {
+    console.log(`✅ [Auth Service] Email configured for: ${emailUser}`);
+}
+
 
 // Middleware
 app.use(helmet());

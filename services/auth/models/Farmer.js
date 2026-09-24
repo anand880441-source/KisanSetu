@@ -14,6 +14,11 @@ const farmerSchema = new mongoose.Schema({
         coordinates: { type: [Number], default: [0, 0] },
         address: { type: String, default: '' }
     },
+    isEmailVerified: { type: Boolean, default: false },
+    otpCode: { type: String, select: false },
+    otpExpiresAt: { type: Date, select: false },
+    otpAttempts: { type: Number, default: 0, select: false },
+    otpLastSentAt: { type: Date, select: false },
     products: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Product' }],
     orders: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Order' }],
     orderHistory: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Order' }],

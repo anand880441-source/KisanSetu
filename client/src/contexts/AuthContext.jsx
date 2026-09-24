@@ -44,6 +44,34 @@ export const AuthProvider = ({ children }) => {
         try {
             setError(null);
             const response = await authService.register(formData);
+            const resData = response.data;
+            
+            // Check if backend returned OTP email verification requirement
+            if (resData?.data?.requiresVerification) {
+                return { success: true, requiresVerification: true, email: resData.data.email };
+            }
+
+            // Standard fallback if token & user are returned directly
+            const { token: authToken, user: userData } = resData;
+            if (authToken && userData) {
+                setToken(authToken);
+                setUser(userData);
+                setUserState(userData);
+                setTokenState(authToken);
+                navigate(userData.role === 'farmer' ? '/farmer/dashboard' : '/buyer/browse');
+            }
+            return { success: true };
+        } catch (err) {
+            const message = err.response?.data?.message || 'Signup failed';
+            setError(message);
+            return { success: false, error: message };
+        }
+    }, [navigate]);
+
+    const verifyOtp = useCallback(async (email, otp) => {
+        try {
+            setError(null);
+            const response = await authService.verifyOtp(email, otp);
             const { token: authToken, user: userData } = response.data;
             setToken(authToken);
             setUser(userData);
@@ -52,11 +80,23 @@ export const AuthProvider = ({ children }) => {
             navigate(userData.role === 'farmer' ? '/farmer/dashboard' : '/buyer/browse');
             return { success: true };
         } catch (err) {
-            const message = err.response?.data?.message || 'Signup failed';
+            const message = err.response?.data?.message || 'OTP verification failed';
             setError(message);
             return { success: false, error: message };
         }
     }, [navigate]);
+
+    const resendOtp = useCallback(async (email) => {
+        try {
+            setError(null);
+            const response = await authService.resendOtp(email);
+            return { success: true, message: response.data?.message || 'OTP resent successfully' };
+        } catch (err) {
+            const message = err.response?.data?.message || 'Failed to resend OTP';
+            setError(message);
+            return { success: false, error: message };
+        }
+    }, []);
 
     const logout = useCallback(() => {
         setUserState(null);
@@ -68,7 +108,7 @@ export const AuthProvider = ({ children }) => {
     const isAuthenticated = !!user;
 
     return (
-        <AuthContext.Provider value={{ user, token, loading, error, isAuthenticated, login, signup, logout, setError }}>
+        <AuthContext.Provider value={{ user, token, loading, error, isAuthenticated, login, signup, verifyOtp, resendOtp, logout, setError }}>
             {children}
         </AuthContext.Provider>
     );
